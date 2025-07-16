@@ -22,7 +22,7 @@ db = client[os.environ['DB_NAME']]
 
 # Configure Gemini AI
 genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Create the main app without a prefix
 app = FastAPI()
