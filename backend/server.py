@@ -210,7 +210,7 @@ async def get_daily_summary(user_id: str, date_str: str):
     fat_target = (calorie_target * user['macro_split']['fat'] / 100) / 9  # 9 cal/g
     
     return DailySummary(
-        date=query_date,
+        date=query_date.isoformat(),
         total_calories=total_calories,
         total_protein=total_protein,
         total_carbs=total_carbs,
