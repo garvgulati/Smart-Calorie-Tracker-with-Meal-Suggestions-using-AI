@@ -93,7 +93,7 @@ class MealEntryCreate(BaseModel):
     fat: float
 
 class DailySummary(BaseModel):
-    date: date
+    date: str  # ISO format string
     total_calories: float
     total_protein: float
     total_carbs: float
