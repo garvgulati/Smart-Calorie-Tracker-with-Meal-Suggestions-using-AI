@@ -79,7 +79,7 @@ class MealEntry(BaseModel):
     protein: float
     carbs: float
     fat: float
-    date: date
+    date: str  # ISO format string
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class MealEntryCreate(BaseModel):
