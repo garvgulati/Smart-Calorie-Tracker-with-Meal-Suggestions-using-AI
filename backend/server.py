@@ -115,7 +115,7 @@ class AIFoodSuggestion(BaseModel):
 
 class AIMealSuggestionRequest(BaseModel):
     user_id: str
-    current_date: date
+    current_date: str  # ISO format string
     remaining_calories: float
     remaining_protein: float
     remaining_carbs: float
