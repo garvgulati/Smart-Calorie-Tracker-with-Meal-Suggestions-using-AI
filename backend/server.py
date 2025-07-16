@@ -165,7 +165,7 @@ async def get_foods():
 @api_router.post("/meals", response_model=MealEntry)
 async def create_meal_entry(meal: MealEntryCreate):
     meal_dict = meal.dict()
-    meal_dict['date'] = date.today()
+    meal_dict['date'] = date.today().isoformat()  # Convert to ISO format string
     meal_obj = MealEntry(**meal_dict)
     await db.meals.insert_one(meal_obj.dict())
     return meal_obj
