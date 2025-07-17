@@ -26,9 +26,6 @@ A smart, AI-powered calorie and macro tracker that not only logs your food intak
 - 🎯 **Goal-Based Recommendations**  
   Set daily targets (fat loss, muscle gain, maintenance) and receive AI-driven food suggestions accordingly.
 
-- ⚙️ **Fully Customizable in Google Sheets**  
-  Clone and personalize the tracker to fit your specific needs.
-
 ---
 
 ## 🚀 Getting Started
