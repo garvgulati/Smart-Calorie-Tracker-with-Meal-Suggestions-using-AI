@@ -41,6 +41,23 @@ class User(BaseModel):
     daily_calorie_target: int
     macro_split: Dict[str, int]  # protein, carbs, fat percentages
     dietary_preferences: List[str] = []
+    meal_preferences: Dict[str, bool] = Field(default_factory=lambda: {
+        "vegetarian": False,
+        "vegan": False,
+        "gluten_free": False,
+        "dairy_free": False,
+        "high_protein": False,
+        "low_carb": False,
+        "keto": False,
+        "paleo": False,
+        "indian": False,
+        "mediterranean": False,
+        "asian": False,
+        "mexican": False,
+        "italian": False,
+        "american": False
+    })
+    recent_suggestions: List[str] = []  # Track recent meal suggestions
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserCreate(BaseModel):
