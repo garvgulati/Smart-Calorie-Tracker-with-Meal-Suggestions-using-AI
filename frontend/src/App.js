@@ -477,22 +477,55 @@ function App() {
               )}
 
               {aiSuggestions.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-amber-300 mb-3">🤖 AI Meal Suggestions</h3>
                   {aiSuggestions.map((suggestion, index) => (
-                    <div key={index} className="bg-emerald-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-amber-300 font-semibold">{suggestion.food_name}</h4>
-                        <span className="text-emerald-200 text-sm">{suggestion.amount_grams}g</span>
+                    <div key={index} className="bg-emerald-900/50 rounded-lg p-4 border border-emerald-600/50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="text-amber-300 font-semibold text-lg">{suggestion.meal_name}</h4>
+                        <span className="text-emerald-200 text-sm bg-emerald-800/50 px-2 py-1 rounded">
+                          {suggestion.cooking_time}
+                        </span>
                       </div>
-                      <div className="text-sm text-emerald-300 mb-2">
-                        {suggestion.calories} cal | {suggestion.protein}g P | {suggestion.carbs}g C | {suggestion.fat}g F
+                      
+                      <div className="mb-3">
+                        <div className="text-sm text-emerald-300 mb-2">
+                          <span className="font-medium">Serving:</span> {suggestion.serving_size}
+                        </div>
+                        <div className="text-sm text-emerald-300 grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <span>{Math.round(suggestion.total_calories)} cal</span>
+                          <span>{Math.round(suggestion.total_protein)}g P</span>
+                          <span>{Math.round(suggestion.total_carbs)}g C</span>
+                          <span>{Math.round(suggestion.total_fat)}g F</span>
+                        </div>
                       </div>
-                      <p className="text-xs text-emerald-400 mb-3">{suggestion.reason}</p>
+                      
+                      <div className="mb-3">
+                        <h5 className="text-emerald-200 font-medium mb-1">🥘 Ingredients:</h5>
+                        <ul className="text-sm text-emerald-300 space-y-1">
+                          {suggestion.ingredients.map((ingredient, idx) => (
+                            <li key={idx} className="flex items-center">
+                              <span className="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
+                              {ingredient}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <h5 className="text-emerald-200 font-medium mb-1">👨‍🍳 Recipe:</h5>
+                        <p className="text-sm text-emerald-300 leading-relaxed">{suggestion.recipe}</p>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-xs text-emerald-400 italic">💡 {suggestion.reason}</p>
+                      </div>
+                      
                       <button
                         onClick={() => addSuggestionToMeal(suggestion)}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-emerald-900 font-semibold py-2 px-4 rounded text-sm transition-all duration-300"
+                        className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-emerald-900 font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105"
                       >
-                        Add to Meal
+                        Add This Meal 🍽️
                       </button>
                     </div>
                   ))}
