@@ -233,28 +233,50 @@ async def get_ai_meal_suggestions(request: AIMealSuggestionRequest):
         dietary_prefs = ", ".join(request.dietary_preferences) if request.dietary_preferences else "no specific preferences"
         
         prompt = f"""
-        I need meal suggestions for {request.meal_type} with the following nutritional requirements:
+        I need complete meal suggestions for {request.meal_type} with the following nutritional requirements:
         - Remaining calories: {request.remaining_calories}
         - Remaining protein: {request.remaining_protein}g
         - Remaining carbs: {request.remaining_carbs}g
         - Remaining fat: {request.remaining_fat}g
         - Dietary preferences: {dietary_prefs}
         
-        Please suggest 3 specific foods with exact portions that would help reach these macro targets.
+        Please suggest 3 complete, ready-to-eat meals (not individual ingredients) that would help reach these macro targets. 
+        Include full recipes with all ingredients, sauces, and cooking steps.
+        
+        Examples of complete meals: "Chicken Burrito Bowl", "Veggie Omelette", "Tandoori Chicken with Rice", "Paneer Tikka Wrap", "Omu Rice", "Protein Smoothie Bowl"
+        
         Return ONLY a JSON array with this exact format:
         [
             {{
-                "food_name": "specific food name",
-                "amount_grams": 100,
-                "calories": 250,
-                "protein": 20,
-                "carbs": 30,
-                "fat": 8,
-                "reason": "brief explanation why this food fits the requirements"
+                "meal_name": "Complete meal name (e.g., Chicken Burrito Bowl)",
+                "total_calories": 450,
+                "total_protein": 35,
+                "total_carbs": 40,
+                "total_fat": 15,
+                "serving_size": "1 bowl (approximately 350g)",
+                "ingredients": [
+                    "150g grilled chicken breast",
+                    "80g brown rice",
+                    "50g black beans",
+                    "30g cheddar cheese",
+                    "40g avocado",
+                    "20g salsa",
+                    "10g sour cream",
+                    "Mixed greens"
+                ],
+                "recipe": "1. Cook brown rice according to package instructions. 2. Season chicken breast with cumin, paprika, salt and pepper. Grill for 6-8 minutes each side. 3. Warm black beans in a pan. 4. In a bowl, layer rice, beans, sliced chicken, cheese, avocado, salsa, and sour cream. 5. Garnish with mixed greens.",
+                "cooking_time": "20 minutes",
+                "reason": "High protein meal with balanced macros, provides sustained energy and fits remaining calorie target"
             }}
         ]
         
-        Make sure the suggested foods are realistic, commonly available, and the nutritional values are accurate.
+        Make sure each meal is:
+        - Complete and ready to eat
+        - Includes all ingredients with approximate amounts
+        - Has detailed cooking instructions
+        - Matches the dietary preferences
+        - Has accurate nutritional calculations for the entire meal
+        - Is realistic and commonly prepared
         """
         
         response = model.generate_content(prompt)
