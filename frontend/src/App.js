@@ -162,15 +162,16 @@ function App() {
 
   const addSuggestionToMeal = (suggestion) => {
     setMealEntry({
-      food_name: suggestion.food_name,
-      amount_grams: suggestion.amount_grams,
+      food_name: suggestion.meal_name,
+      amount_grams: parseFloat(suggestion.serving_size.match(/\d+/)?.[0] || 200), // Extract grams from serving size
       meal_type: mealEntry.meal_type,
-      calories: suggestion.calories,
-      protein: suggestion.protein,
-      carbs: suggestion.carbs,
-      fat: suggestion.fat
+      calories: suggestion.total_calories,
+      protein: suggestion.total_protein,
+      carbs: suggestion.total_carbs,
+      fat: suggestion.total_fat
     });
     setAiSuggestions([]);
+    setCurrentView('add-meal'); // Switch to add meal view
   };
 
   const calculateMacroPercentages = () => {
