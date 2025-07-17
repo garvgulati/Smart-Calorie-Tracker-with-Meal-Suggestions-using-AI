@@ -167,6 +167,8 @@ class AIMealSuggestionRequest(BaseModel):
     remaining_fat: float
     meal_type: str
     dietary_preferences: List[str] = []
+    meal_preferences: Dict[str, bool] = Field(default_factory=dict)
+    exclude_recent: List[str] = []  # Recently suggested meals to avoid
 
 # User endpoints
 @api_router.post("/users", response_model=User)
