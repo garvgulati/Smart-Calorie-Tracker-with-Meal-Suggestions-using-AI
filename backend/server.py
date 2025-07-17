@@ -299,31 +299,60 @@ async def get_ai_meal_suggestions(request: AIMealSuggestionRequest):
             return {
                 "suggestions": [
                     {
-                        "food_name": "Grilled Chicken Breast",
-                        "amount_grams": 100,
-                        "calories": 165,
-                        "protein": 31,
-                        "carbs": 0,
-                        "fat": 3.6,
-                        "reason": "High protein, low fat, fits most dietary preferences"
+                        "meal_name": "Grilled Chicken Bowl",
+                        "total_calories": 420,
+                        "total_protein": 35,
+                        "total_carbs": 35,
+                        "total_fat": 12,
+                        "serving_size": "1 bowl (300g)",
+                        "ingredients": [
+                            "120g grilled chicken breast",
+                            "100g brown rice",
+                            "50g steamed broccoli",
+                            "20g mixed nuts",
+                            "15ml olive oil dressing"
+                        ],
+                        "recipe": "1. Cook brown rice. 2. Season and grill chicken breast. 3. Steam broccoli. 4. Combine in bowl with nuts and drizzle with olive oil.",
+                        "cooking_time": "25 minutes",
+                        "reason": "Balanced macros with high protein for muscle maintenance"
                     },
                     {
-                        "food_name": "Brown Rice",
-                        "amount_grams": 100,
-                        "calories": 111,
-                        "protein": 2.6,
-                        "carbs": 23,
-                        "fat": 0.9,
-                        "reason": "Good source of complex carbs"
+                        "meal_name": "Veggie Omelette",
+                        "total_calories": 320,
+                        "total_protein": 22,
+                        "total_carbs": 8,
+                        "total_fat": 22,
+                        "serving_size": "1 omelette (200g)",
+                        "ingredients": [
+                            "3 whole eggs",
+                            "50g bell peppers",
+                            "30g mushrooms",
+                            "40g cheese",
+                            "10ml olive oil",
+                            "Salt and pepper"
+                        ],
+                        "recipe": "1. Whisk eggs with salt and pepper. 2. Heat olive oil in pan. 3. Add peppers and mushrooms, cook 3 minutes. 4. Pour eggs over vegetables. 5. Add cheese and fold omelette.",
+                        "cooking_time": "10 minutes",
+                        "reason": "High protein, low carb meal perfect for any time of day"
                     },
                     {
-                        "food_name": "Avocado",
-                        "amount_grams": 50,
-                        "calories": 80,
-                        "protein": 1,
-                        "carbs": 4,
-                        "fat": 7,
-                        "reason": "Healthy fats and fiber"
+                        "meal_name": "Protein Smoothie Bowl",
+                        "total_calories": 380,
+                        "total_protein": 25,
+                        "total_carbs": 45,
+                        "total_fat": 10,
+                        "serving_size": "1 bowl (400ml)",
+                        "ingredients": [
+                            "30g protein powder",
+                            "150g Greek yogurt",
+                            "100g mixed berries",
+                            "15g granola",
+                            "10g almonds",
+                            "5g chia seeds"
+                        ],
+                        "recipe": "1. Blend protein powder with yogurt and half the berries. 2. Pour into bowl. 3. Top with remaining berries, granola, almonds, and chia seeds.",
+                        "cooking_time": "5 minutes",
+                        "reason": "Quick high-protein meal with antioxidants and fiber"
                     }
                 ]
             }
