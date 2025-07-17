@@ -105,12 +105,15 @@ class DailySummary(BaseModel):
     meals: List[MealEntry]
 
 class AIFoodSuggestion(BaseModel):
-    food_name: str
-    amount_grams: float
-    calories: float
-    protein: float
-    carbs: float
-    fat: float
+    meal_name: str
+    total_calories: float
+    total_protein: float
+    total_carbs: float
+    total_fat: float
+    serving_size: str
+    ingredients: List[str]
+    recipe: str
+    cooking_time: str
     reason: str
 
 class AIMealSuggestionRequest(BaseModel):
