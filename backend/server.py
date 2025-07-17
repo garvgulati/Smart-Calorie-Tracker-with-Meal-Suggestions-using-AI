@@ -69,6 +69,22 @@ class UserCreate(BaseModel):
     daily_calorie_target: int
     macro_split: Dict[str, int]
     dietary_preferences: List[str] = []
+    meal_preferences: Dict[str, bool] = Field(default_factory=lambda: {
+        "vegetarian": False,
+        "vegan": False,
+        "gluten_free": False,
+        "dairy_free": False,
+        "high_protein": False,
+        "low_carb": False,
+        "keto": False,
+        "paleo": False,
+        "indian": False,
+        "mediterranean": False,
+        "asian": False,
+        "mexican": False,
+        "italian": False,
+        "american": False
+    })
 
 class FoodItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
