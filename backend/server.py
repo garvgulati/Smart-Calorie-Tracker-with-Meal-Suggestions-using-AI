@@ -148,6 +148,15 @@ class AIFoodSuggestion(BaseModel):
     recipe: str
     cooking_time: str
     reason: str
+    micronutrients: Dict[str, str] = Field(default_factory=lambda: {
+        "vitamin_c": "0mg",
+        "iron": "0mg",
+        "calcium": "0mg",
+        "fiber": "0g",
+        "sodium": "0mg",
+        "potassium": "0mg"
+    })
+    cuisine_type: str = "General"
 
 class AIMealSuggestionRequest(BaseModel):
     user_id: str
