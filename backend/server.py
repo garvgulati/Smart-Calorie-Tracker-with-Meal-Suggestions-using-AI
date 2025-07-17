@@ -273,54 +273,100 @@ async def get_daily_summary(user_id: str, date_str: str):
 @api_router.post("/ai-meal-suggestions")
 async def get_ai_meal_suggestions(request: AIMealSuggestionRequest):
     try:
-        # Create prompt for Gemini
-        dietary_prefs = ", ".join(request.dietary_preferences) if request.dietary_preferences else "no specific preferences"
+        # Get user preferences
+        user = await db.users.find_one({"id": request.user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         
+        # Build dietary preferences string
+        active_preferences = []
+        meal_prefs = request.meal_preferences or user.get('meal_preferences', {})
+        
+        for pref, enabled in meal_prefs.items():
+            if enabled:
+                active_preferences.append(pref.replace('_', ' '))
+        
+        if request.dietary_preferences:
+            active_preferences.extend(request.dietary_preferences)
+        
+        dietary_prefs = ", ".join(active_preferences) if active_preferences else "no specific preferences"
+        
+        # Build excluded meals string
+        excluded_meals = ", ".join(request.exclude_recent) if request.exclude_recent else "none"
+        
+        # Meal timing context
+        meal_timing_context = {
+            "breakfast": "light, energizing meals suitable for morning consumption",
+            "lunch": "substantial, balanced meals for midday energy",
+            "dinner": "satisfying, complete meals for evening consumption",
+            "snack": "quick, portable options for between meals"
+        }
+        
+        timing_context = meal_timing_context.get(request.meal_type, "balanced meals")
+        
+        # Create enhanced prompt for Gemini
         prompt = f"""
-        I need complete meal suggestions for {request.meal_type} with the following nutritional requirements:
+        I need complete {request.meal_type} meal suggestions with the following requirements:
+        
+        NUTRITIONAL TARGETS:
         - Remaining calories: {request.remaining_calories}
         - Remaining protein: {request.remaining_protein}g
         - Remaining carbs: {request.remaining_carbs}g
         - Remaining fat: {request.remaining_fat}g
+        
+        MEAL CONTEXT:
+        - Meal type: {request.meal_type} ({timing_context})
         - Dietary preferences: {dietary_prefs}
+        - Recently suggested meals to AVOID: {excluded_meals}
         
-        Please suggest 3 complete, ready-to-eat meals (not individual ingredients) that would help reach these macro targets. 
-        Include full recipes with all ingredients, sauces, and cooking steps.
-        
-        Examples of complete meals: "Chicken Burrito Bowl", "Veggie Omelette", "Tandoori Chicken with Rice", "Paneer Tikka Wrap", "Omu Rice", "Protein Smoothie Bowl"
+        Please suggest 3 complete, diverse meals that:
+        1. Are appropriate for {request.meal_type} timing
+        2. Match the dietary preferences
+        3. Are completely different from recently suggested meals
+        4. Include micronutrient information
+        5. Have varied cuisine types
         
         Return ONLY a JSON array with this exact format:
         [
             {{
-                "meal_name": "Complete meal name (e.g., Chicken Burrito Bowl)",
+                "meal_name": "Complete meal name (e.g., Mediterranean Quinoa Bowl)",
                 "total_calories": 450,
                 "total_protein": 35,
                 "total_carbs": 40,
                 "total_fat": 15,
                 "serving_size": "1 bowl (approximately 350g)",
                 "ingredients": [
-                    "150g grilled chicken breast",
-                    "80g brown rice",
-                    "50g black beans",
-                    "30g cheddar cheese",
-                    "40g avocado",
-                    "20g salsa",
-                    "10g sour cream",
-                    "Mixed greens"
+                    "100g quinoa",
+                    "120g grilled chicken breast",
+                    "50g cherry tomatoes",
+                    "40g cucumber",
+                    "30g feta cheese",
+                    "20g olives",
+                    "15ml olive oil",
+                    "10ml lemon juice",
+                    "Fresh herbs"
                 ],
-                "recipe": "1. Cook brown rice according to package instructions. 2. Season chicken breast with cumin, paprika, salt and pepper. Grill for 6-8 minutes each side. 3. Warm black beans in a pan. 4. In a bowl, layer rice, beans, sliced chicken, cheese, avocado, salsa, and sour cream. 5. Garnish with mixed greens.",
-                "cooking_time": "20 minutes",
-                "reason": "High protein meal with balanced macros, provides sustained energy and fits remaining calorie target"
+                "recipe": "1. Cook quinoa according to package instructions. 2. Season and grill chicken breast. 3. Chop vegetables. 4. Combine all ingredients in bowl. 5. Drizzle with olive oil and lemon juice. 6. Garnish with fresh herbs.",
+                "cooking_time": "25 minutes",
+                "reason": "High protein Mediterranean meal with complete amino acids and healthy fats",
+                "micronutrients": {{
+                    "vitamin_c": "45mg",
+                    "iron": "3.2mg",
+                    "calcium": "150mg",
+                    "fiber": "8g",
+                    "sodium": "420mg",
+                    "potassium": "680mg"
+                }},
+                "cuisine_type": "Mediterranean"
             }}
         ]
         
-        Make sure each meal is:
-        - Complete and ready to eat
-        - Includes all ingredients with approximate amounts
-        - Has detailed cooking instructions
-        - Matches the dietary preferences
-        - Has accurate nutritional calculations for the entire meal
-        - Is realistic and commonly prepared
+        IMPORTANT:
+        - Make meals appropriate for {request.meal_type}
+        - Ensure variety in cuisine types (Mediterranean, Asian, Indian, Mexican, etc.)
+        - Include accurate micronutrient estimates
+        - Avoid repeating: {excluded_meals}
+        - Match dietary preferences: {dietary_prefs}
         """
         
         response = model.generate_content(prompt)
@@ -336,70 +382,149 @@ async def get_ai_meal_suggestions(request: AIMealSuggestionRequest):
                 response_text = response_text.replace('```', '')
             
             suggestions = json.loads(response_text)
+            
+            # Update user's recent suggestions
+            meal_names = [s.get('meal_name', '') for s in suggestions]
+            recent_suggestions = user.get('recent_suggestions', [])
+            recent_suggestions.extend(meal_names)
+            # Keep only last 15 suggestions
+            recent_suggestions = recent_suggestions[-15:]
+            
+            await db.users.update_one(
+                {"id": request.user_id},
+                {"$set": {"recent_suggestions": recent_suggestions}}
+            )
+            
             return {"suggestions": suggestions}
             
         except json.JSONDecodeError:
-            # Fallback suggestions if JSON parsing fails
-            return {
-                "suggestions": [
+            # Enhanced fallback suggestions with micronutrients
+            fallback_suggestions = {
+                "breakfast": [
                     {
-                        "meal_name": "Grilled Chicken Bowl",
-                        "total_calories": 420,
-                        "total_protein": 35,
-                        "total_carbs": 35,
-                        "total_fat": 12,
-                        "serving_size": "1 bowl (300g)",
-                        "ingredients": [
-                            "120g grilled chicken breast",
-                            "100g brown rice",
-                            "50g steamed broccoli",
-                            "20g mixed nuts",
-                            "15ml olive oil dressing"
-                        ],
-                        "recipe": "1. Cook brown rice. 2. Season and grill chicken breast. 3. Steam broccoli. 4. Combine in bowl with nuts and drizzle with olive oil.",
-                        "cooking_time": "25 minutes",
-                        "reason": "Balanced macros with high protein for muscle maintenance"
-                    },
-                    {
-                        "meal_name": "Veggie Omelette",
-                        "total_calories": 320,
-                        "total_protein": 22,
-                        "total_carbs": 8,
-                        "total_fat": 22,
-                        "serving_size": "1 omelette (200g)",
-                        "ingredients": [
-                            "3 whole eggs",
-                            "50g bell peppers",
-                            "30g mushrooms",
-                            "40g cheese",
-                            "10ml olive oil",
-                            "Salt and pepper"
-                        ],
-                        "recipe": "1. Whisk eggs with salt and pepper. 2. Heat olive oil in pan. 3. Add peppers and mushrooms, cook 3 minutes. 4. Pour eggs over vegetables. 5. Add cheese and fold omelette.",
-                        "cooking_time": "10 minutes",
-                        "reason": "High protein, low carb meal perfect for any time of day"
-                    },
-                    {
-                        "meal_name": "Protein Smoothie Bowl",
+                        "meal_name": "Protein Pancakes with Berries",
                         "total_calories": 380,
                         "total_protein": 25,
                         "total_carbs": 45,
-                        "total_fat": 10,
-                        "serving_size": "1 bowl (400ml)",
+                        "total_fat": 12,
+                        "serving_size": "2 pancakes with toppings",
                         "ingredients": [
-                            "30g protein powder",
-                            "150g Greek yogurt",
+                            "40g protein powder",
+                            "1 banana",
+                            "2 eggs",
                             "100g mixed berries",
-                            "15g granola",
-                            "10g almonds",
-                            "5g chia seeds"
+                            "15ml maple syrup",
+                            "5g coconut oil"
                         ],
-                        "recipe": "1. Blend protein powder with yogurt and half the berries. 2. Pour into bowl. 3. Top with remaining berries, granola, almonds, and chia seeds.",
+                        "recipe": "1. Mash banana and mix with eggs and protein powder. 2. Cook pancakes in coconut oil. 3. Top with berries and maple syrup.",
+                        "cooking_time": "15 minutes",
+                        "reason": "High protein breakfast with antioxidants and sustained energy",
+                        "micronutrients": {
+                            "vitamin_c": "60mg",
+                            "iron": "2.5mg",
+                            "calcium": "120mg",
+                            "fiber": "6g",
+                            "sodium": "180mg",
+                            "potassium": "450mg"
+                        },
+                        "cuisine_type": "American"
+                    }
+                ],
+                "lunch": [
+                    {
+                        "meal_name": "Mediterranean Quinoa Bowl",
+                        "total_calories": 520,
+                        "total_protein": 32,
+                        "total_carbs": 55,
+                        "total_fat": 18,
+                        "serving_size": "1 bowl (400g)",
+                        "ingredients": [
+                            "100g quinoa",
+                            "120g grilled chicken",
+                            "50g cherry tomatoes",
+                            "40g cucumber",
+                            "30g feta cheese",
+                            "20g olives",
+                            "15ml olive oil"
+                        ],
+                        "recipe": "1. Cook quinoa. 2. Grill chicken with herbs. 3. Chop vegetables. 4. Combine in bowl with olive oil dressing.",
+                        "cooking_time": "25 minutes",
+                        "reason": "Complete protein with healthy fats and complex carbs",
+                        "micronutrients": {
+                            "vitamin_c": "45mg",
+                            "iron": "3.2mg",
+                            "calcium": "150mg",
+                            "fiber": "8g",
+                            "sodium": "420mg",
+                            "potassium": "680mg"
+                        },
+                        "cuisine_type": "Mediterranean"
+                    }
+                ],
+                "dinner": [
+                    {
+                        "meal_name": "Tandoori Chicken with Basmati Rice",
+                        "total_calories": 580,
+                        "total_protein": 42,
+                        "total_carbs": 60,
+                        "total_fat": 16,
+                        "serving_size": "1 plate (450g)",
+                        "ingredients": [
+                            "150g chicken breast",
+                            "100g basmati rice",
+                            "50g Greek yogurt",
+                            "Tandoori spices",
+                            "30g onions",
+                            "20g cilantro",
+                            "10ml lemon juice"
+                        ],
+                        "recipe": "1. Marinate chicken in yogurt and spices. 2. Cook basmati rice. 3. Grill chicken until cooked through. 4. Serve with rice and garnish.",
+                        "cooking_time": "35 minutes",
+                        "reason": "High protein Indian meal with aromatic spices and complete nutrition",
+                        "micronutrients": {
+                            "vitamin_c": "25mg",
+                            "iron": "2.8mg",
+                            "calcium": "180mg",
+                            "fiber": "3g",
+                            "sodium": "480mg",
+                            "potassium": "720mg"
+                        },
+                        "cuisine_type": "Indian"
+                    }
+                ],
+                "snack": [
+                    {
+                        "meal_name": "Greek Yogurt Parfait",
+                        "total_calories": 280,
+                        "total_protein": 18,
+                        "total_carbs": 32,
+                        "total_fat": 8,
+                        "serving_size": "1 cup (250g)",
+                        "ingredients": [
+                            "150g Greek yogurt",
+                            "30g granola",
+                            "80g mixed berries",
+                            "10g honey",
+                            "5g almonds"
+                        ],
+                        "recipe": "1. Layer yogurt, berries, and granola. 2. Drizzle with honey. 3. Top with almonds.",
                         "cooking_time": "5 minutes",
-                        "reason": "Quick high-protein meal with antioxidants and fiber"
+                        "reason": "Protein-rich snack with probiotics and antioxidants",
+                        "micronutrients": {
+                            "vitamin_c": "50mg",
+                            "iron": "1.2mg",
+                            "calcium": "200mg",
+                            "fiber": "4g",
+                            "sodium": "80mg",
+                            "potassium": "320mg"
+                        },
+                        "cuisine_type": "Mediterranean"
                     }
                 ]
             }
+            
+            meal_suggestions = fallback_suggestions.get(request.meal_type, fallback_suggestions["lunch"])
+            return {"suggestions": meal_suggestions}
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
